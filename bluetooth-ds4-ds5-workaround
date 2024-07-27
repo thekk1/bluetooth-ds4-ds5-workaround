@@ -2,7 +2,7 @@
 
 # Script Name: bazzite-bluetooth-ds4-ds5-workaround
 # Author: https://github.com/thekk1
-# Version: 1.0
+# Version: 1.1
 # Description:
 # This script monitors connected PS4 and PS5 gamepad devices and disconnects
 # the Bluetooth connection if specific button combinations are detected (Home and Triangle buttons).
@@ -10,9 +10,10 @@
 # to ensure proper cleanup of processes associated with devices that are no longer present.
 #
 # Usage:
-# ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install]
+# ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install] [--uninstall]
 # -d: Enable debug mode
 # --install: Install and enable the systemd service
+# --uninstall: Uninstall the systemd service
 
 DEBUG=false
 MONITOR_FILE="/tmp/monitored_devices.txt"
@@ -22,7 +23,7 @@ SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 
 echo "" > $MONITOR_FILE
 
-# Check for the debug flag and install flag
+# Check for the debug flag, install flag, and uninstall flag
 while getopts "d-:" opt; do
     case ${opt} in
         d ) DEBUG=true ;;
@@ -56,12 +57,26 @@ EOF
                     fi
                     exit 0
                     ;;
+                uninstall)
+                    # Uninstall the systemd service
+                    if [[ -f "$SERVICE_PATH" ]]; then
+                        echo "Uninstalling systemd service..."
+                        sudo systemctl stop $SERVICE_NAME
+                        sudo systemctl disable $SERVICE_NAME
+                        sudo rm "$SERVICE_PATH"
+                        sudo systemctl daemon-reload
+                        echo "Service uninstalled."
+                    else
+                        echo "Service not found."
+                    fi
+                    exit 0
+                    ;;
                 *)
-                    echo "Usage: $0 [-d] [--install]"
+                    echo "Usage: $0 [-d] [--install] [--uninstall]"
                     exit 1
                     ;;
             esac ;;
-        \? ) echo "Usage: $0 [-d] [--install]"
+        \? ) echo "Usage: $0 [-d] [--install] [--uninstall]"
              exit 1 ;;
     esac
 done
