@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# Script Name: bazzite-bluetooth-ds4-ds5-workaround
+# Author: https://github.com/thekk1
+# Version: 1.0
+# Description:
+# This script monitors connected PS4 and PS5 gamepad devices and disconnects
+# the Bluetooth connection if specific button combinations are detected (Home and Triangle buttons).
+# The script handles background processes for each device and maintains a record of process IDs
+# to ensure proper cleanup of processes associated with devices that are no longer present.
+#
+# Usage:
+# ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install]
+# -d: Enable debug mode
+# --install: Install and enable the systemd service
+
+DEBUG=false
+MONITOR_FILE="/tmp/monitored_devices.txt"
+SERVICE_NAME="bazzite-bluetooth-ds4-ds5-workaround.service"
+SCRIPT_PATH="$(realpath $0)"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
+
+echo "" > $MONITOR_FILE
+
+# Check for the debug flag and install flag
+while getopts "d-:" opt; do
+    case ${opt} in
+        d ) DEBUG=true ;;
+        - ) case "${OPTARG}" in
+                install)
+                    # Install the systemd service
+                    if [[ ! -f "$SERVICE_PATH" ]]; then
+                        echo "Installing systemd service..."
+                        cat <<EOF | sudo tee "$SERVICE_PATH"
+[Unit]
+Description=Disconnect DS4 and DS5 controller on shortcut HOME + triangle
+After=bluetooth.target
+ConditionFileIsExecutable=$SCRIPT_PATH
+
+[Service]
+User=root
+ExecStart=/bin/bash $SCRIPT_PATH
+TimeoutStartSec=5
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+                        sudo systemctl daemon-reload
+                        sudo systemctl enable $SERVICE_NAME
+                        sudo systemctl start $SERVICE_NAME
+                        echo "Service installed and started."
+                    else
+                        echo "Service already installed."
+                    fi
+                    exit 0
+                    ;;
+                *)
+                    echo "Usage: $0 [-d] [--install]"
+                    exit 1
+                    ;;
+            esac ;;
+        \? ) echo "Usage: $0 [-d] [--install]"
+             exit 1 ;;
+    esac
+done
+
+# Function to find gamepad devices (PS4 and PS5)
+find_gamepad_devices() {
+    local devices=()
+    local base_path="/sys/class/input"
+
+    for entry in "$base_path"/*; do
+        if [[ $(basename "$entry") == event* ]]; then
+            local device_path="$entry/device"
+            local uevent_path="$device_path/uevent"
+
+            if [[ -f "$uevent_path" ]]; then
+                local devicename
+                devicename=$(grep "NAME" "$uevent_path" | cut -d'=' -f2 | tr -d '"')
+                if [[ "$devicename" == "Wireless Controller" || "$devicename" == "DualSense Wireless Controller" ]]; then
+                    devices+=("$(basename "$entry")")
+                fi
+            fi
+        fi
+    done
+    echo "${devices[@]}"
+}
+
+# Function to get MAC address from uevent file
+get_mac_address_from_uevent() {
+    local device="$1"
+    local uniq_path="/sys/class/input/$device/device/uevent"
+
+    if [[ -f "$uniq_path" ]]; then
+        local mac_address
+        mac_address=$(grep "UNIQ" "$uniq_path" | cut -d'=' -f2 | tr -d '"')
+        echo "$mac_address"
+    else
+        echo ""
+    fi
+}
+
+# Function to monitor the gamepad and disconnect Bluetooth connection
+monitor_gamepad() {
+    local device_path="$1"
+    local bluetooth_mac_address="$2"
+    local process_name="monitor_gamepad_$bluetooth_mac_address"
+
+    $DEBUG && echo "Starting monitoring on
