@@ -9,7 +9,6 @@ to ensure proper cleanup of processes associated with devices that are no longer
 
 ## Usage
 
-- To install the service:
   ```bash
   ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install] [--uninstall]
   -d: Enable debug mode
