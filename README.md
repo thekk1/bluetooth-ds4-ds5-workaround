@@ -10,7 +10,7 @@ to ensure proper cleanup of processes associated with devices that are no longer
 ## Usage
 
   ```bash
-  ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install] [--uninstall]
+  [sudo] ./bazzite-bluetooth-ds4-ds5-workaround [-d] [--install] [--uninstall]
   -d: Enable debug mode
   --install: Install and enable the systemd service
   --uninstall: Uninstall the systemd service
