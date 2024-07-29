@@ -1,7 +1,8 @@
 # bazzite-bluetooth-ds4-ds5-workaround
 
 ## Description
-
+Workaround for https://github.com/ValveSoftware/steam-for-linux/issues/8678  
+  
 This script monitors connected PS4 and PS5 gamepad devices and disconnects  
 the Bluetooth connection if specific button combinations are detected (Home and Triangle buttons).  
 The script handles background processes for each device and maintains a record of process IDs  
