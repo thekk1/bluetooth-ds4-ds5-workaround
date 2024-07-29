@@ -130,7 +130,7 @@ monitor_gamepad() {
     fi
 
     # Define the command to disconnect all controllers
-    disconnect_cmd="for controller in \$(bluetoothctl list | awk '/Controller/ {print \$2}'); do bluetoothctl select \$controller; bluetoothctl disconnect $bluetooth_mac_address; done"
+    disconnect_cmd="for controller in \$(bluetoothctl list | awk '/Controller/ {print \$2}'); do echo -e \"select \$controller\ndisconnect $bluetooth_mac_address\n\" | bluetoothctl; done"
 
     # Run the monitoring process with a specific process name
     (cat "$device_path" 2>&1 | xxd -p -c 24 | awk -v mac="$bluetooth_mac_address" -v pname="$process_name" -v cmd="$disconnect_cmd" -v debug="$DEBUG" '
