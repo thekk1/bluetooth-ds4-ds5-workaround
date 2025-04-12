@@ -142,8 +142,8 @@ monitor_gamepad() {
                 value=substr(event_part,9,2);
                 if(code=="3301" || code=="3c01") {
                     if(value=="01") {
-                        if(code=="3301") home_pressed=1;
-                        if(code=="3c01") triangle_pressed=1;
+                        if(code=="3301") triangle_pressed=1;
+                        if(code=="3c01") home_pressed=1;
                         if(home_pressed && triangle_pressed) {
                             # Print a message before executing the disconnect command
                             if (debug == "true") {
