@@ -133,7 +133,7 @@ monitor_gamepad() {
     disconnect_cmd="if ! bluetoothctl disconnect $bluetooth_mac_address >/dev/null 2>&1; then for controller in \$(bluetoothctl list | awk '/Controller/ {print \$2}'); do echo -e \"select \$controller\ndisconnect $bluetooth_mac_address\n\" | bluetoothctl; done; fi"
 
     # Run the monitoring process with a specific process name
-    (cat "$device_path" 2>&1 | xxd -p -c 24 | awk -v mac="$bluetooth_mac_address" -v pname="$process_name" -v cmd="$disconnect_cmd" -v debug="$DEBUG" '
+    (stdbuf -i0 -o0 -e0 cat "$device_path" 2>&1 | stdbuf -i0 -o0 -e0 xxd -p -c 24 | awk -v mac="$bluetooth_mac_address" -v pname="$process_name" -v cmd="$disconnect_cmd" -v debug="$DEBUG" '
         BEGIN { home_pressed=0; triangle_pressed=0 }
         {
             event_part=substr($0,33);
